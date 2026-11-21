@@ -1,6 +1,6 @@
 /* Caca Bumbu — offline-first service worker */
-const CACHE = 'caca-bumbu-v2';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'caca-bumbu-v3';
+const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -14,6 +14,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
+  // Permintaan ke Supabase (domain lain) tidak disentuh: selalu langsung ke jaringan.
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
@@ -21,10 +22,10 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put('./index.html', copy));
+          caches.open(CACHE).then((cache) => cache.put('/index.html', copy));
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }

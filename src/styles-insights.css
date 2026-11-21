@@ -214,3 +214,18 @@
   .catalog-unavailable__card { padding: 33px 20px; border-radius: 19px; }
   .catalog-unavailable__art { width: 96px; height: 96px; }
 }
+
+/* ------------------------------ Akun & sinkron ----------------------------- */
+.account-row { display: flex; align-items: center; gap: 10px; padding: 11px; border: 1px solid #e0ebe2; border-radius: 12px; background: var(--green-wash); }
+.account-row__icon { display: inline-flex; width: 35px; height: 35px; flex: none; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255, 253, 248, 0.75); color: var(--green); }
+.account-row > div { min-width: 0; }
+.account-row strong { display: block; overflow: hidden; font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+.account-row small { display: block; margin-top: 1px; color: var(--muted); font-size: 8.5px; }
+.account-note { display: flex; align-items: flex-start; gap: 6px; margin-top: 9px; color: var(--muted); font-size: 8.5px; line-height: 1.55; }
+.account-note svg { flex: none; margin-top: 1px; }
+.account-password { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; padding: 12px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--paper-2); }
+.account-tools { margin-top: 13px; padding-top: 11px; border-top: 1px dashed var(--line); }
+.account-tools p { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 8.5px; }
+.account-tools__actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
+.account-tools__actions button { padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink-2); font-size: 8.5px; font-weight: 700; }
+.account-tools__actions button:hover { border-color: var(--line-strong); background: var(--paper-2); }

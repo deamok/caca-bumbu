@@ -1,8 +1,10 @@
 node_modules/
 dist/
+dist-auth/
 .vite/
 *.tsbuildinfo
 /screenshots/
+/shots/
 .env
 .env.local
 .DS_Store

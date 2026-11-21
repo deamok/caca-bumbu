@@ -1,2 +1,10 @@
+packages:
+  - '.'
+
+# Izinkan postinstall esbuild (dipakai Vite). Diperlukan pnpm 10+.
 allowBuilds:
   esbuild: true
+
+# pnpm 10 membaca daftar ini dari package.json, pnpm 11 dari file ini.
+onlyBuiltDependencies:
+  - esbuild

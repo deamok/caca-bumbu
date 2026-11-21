@@ -17,9 +17,11 @@ import {
 } from 'lucide-react';
 import { Brand, BrandSymbol } from './Brand';
 import { Avatar, Badge, Button, IconButton, Sheet } from './ui';
+import { SyncStatusBadge, useSyncSummary } from './SyncBadge';
 import { useStore } from '../store/StoreContext';
+import { useAuth } from '../store/AuthContext';
 import { navigate, pathStartsWith, useLocation } from '../lib/router';
-import { useInstallPrompt, useOnlineStatus, useShare } from '../lib/hooks';
+import { useInstallPrompt, useShare } from '../lib/hooks';
 import { useToast } from './Toast';
 import { formatDate, todayKey } from '../lib/date';
 import { normalizePhone } from '../lib/format';
@@ -52,7 +54,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { notify } = useToast();
   const share = useShare();
   const { canInstall, installed, install } = useInstallPrompt();
-  const online = useOnlineStatus();
+  const sync = useSyncSummary();
+  const { cloudEnabled, session } = useAuth();
   const receivable = outstandingTotal(state);
 
   const handleShare = async () => {
@@ -132,7 +135,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <BrandSymbol size={34} />
             <span>
               <strong>{state.settings.businessName}</strong>
-              <small>{online ? 'Tersimpan di HP ini' : 'Mode luring'}</small>
+              <small>{sync.label}</small>
             </span>
           </button>
           <div className="mobile-topbar__actions">
@@ -145,7 +148,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="desktop-topbar__meta">
             <span>{formatDate(todayKey(), 'full')}</span>
             <span className="desktop-topbar__sep" />
-            <span className={`online-dot ${online ? '' : 'is-offline'}`}>{online ? 'Tersimpan lokal' : 'Mode luring'}</span>
+            <span className={`online-dot ${sync.offline ? 'is-offline' : ''}`}>{sync.label}</span>
           </div>
           <div className="desktop-topbar__actions">
             {canInstall && !installed ? (
@@ -189,6 +192,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <Badge tone={state.meta.demo ? 'gold' : 'green'}>{state.meta.demo ? 'Data contoh' : 'Data asli'}</Badge>
         </div>
+        <div className="menu-sync">
+          <SyncStatusBadge />
+          <small>{cloudEnabled && session ? 'Tersambung ke akun cloud' : 'Data hanya di perangkat ini'}</small>
+        </div>
         <div className="menu-links">
           {[...MAIN_NAV, ...SECONDARY_NAV].map((item) => {
             const Icon = item.icon;
@@ -211,7 +218,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Wallet size={17} />
             <span>Piutang saat ini <strong>{formatMoneyShort(receivable)}</strong></span>
           </div>
-          <p>Aplikasi bekerja luring. Data tersimpan di perangkat ini dan bisa dicadangkan dari Pengaturan.</p>
+          <p>
+            {cloudEnabled && session
+              ? 'Data tersimpan di cloud akun ini dan tetap bisa dibuka tanpa sinyal.'
+              : 'Aplikasi bekerja luring. Data tersimpan di perangkat ini dan bisa dicadangkan dari Pengaturan.'}
+          </p>
           {state.meta.demo ? <Badge tone="gold">Mode data contoh</Badge> : null}
         </div>
       </Sheet>

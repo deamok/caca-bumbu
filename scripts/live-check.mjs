@@ -1,19 +1,32 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
-const BASE = 'https://deamok.github.io/caca-bumbu/';
+
+const BASE = `${(process.env.APP_URL || 'https://caca-bumbu.netlify.app').replace(/\/$/, '')}/`;
 const browser = await chromium.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'id-ID', timezoneId: 'Asia/Jakarta' });
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+
+console.log('live base:', BASE);
 for (const path of ['', 'manifest.webmanifest', 'sw.js', 'icons/icon-192.png', 'icons/icon-512.png']) {
   const res = await context.request.get(BASE + path, { headers: { 'Cache-Control': 'no-cache' } });
   console.log(path || 'index', res.status(), res.headers()['content-type']);
   assert.equal(res.status(), 200, 'asset harus 200: ' + path);
 }
+
 await page.goto(BASE + '?v=' + Date.now(), { waitUntil: 'networkidle' });
 console.log('title', await page.title());
+
+// Bila build memakai Supabase, halaman login tampil lebih dulu.
+const offlineButton = page.getByRole('button', { name: 'Lanjut tanpa akun' });
+if (await offlineButton.count()) {
+  console.log('auth gate terdeteksi, memakai mode lokal untuk uji');
+  await offlineButton.click();
+  await page.waitForTimeout(400);
+}
+
 await page.getByRole('button', { name: 'Coba dengan data contoh' }).click();
 await page.waitForTimeout(900);
 assert.ok(await page.getByText(/Selamat (pagi|siang|sore|malam), Caca/).isVisible(), 'dashboard tampil');
@@ -59,7 +72,7 @@ const sw = await page.evaluate(async () => {
 });
 console.log('service worker', sw);
 assert.equal(sw.active, true);
-assert.ok(sw.scope.includes('/caca-bumbu/'), 'scope PWA di subpath');
+assert.ok(sw.scope.endsWith('/'), 'scope PWA di root');
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(500);
 const controlled = await page.evaluate(() => Boolean(navigator.serviceWorker.controller));

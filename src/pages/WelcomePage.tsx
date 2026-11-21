@@ -1,5 +1,6 @@
-import { ArrowRight, Check, CloudOff, LineChart, PackageCheck, ShieldCheck, ShoppingBag, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Cloud, CloudOff, LineChart, PackageCheck, ShieldCheck, ShoppingBag, Sparkles } from 'lucide-react';
 import { useStore } from '../store/StoreContext';
+import { useAuth } from '../store/AuthContext';
 import { Brand, BrandSymbol, EmptyBowl } from '../components/Brand';
 import { Button } from '../components/ui';
 import { useToast } from '../components/Toast';
@@ -8,6 +9,7 @@ import { useInstallPrompt } from '../lib/hooks';
 
 export function WelcomePage() {
   const { state, start } = useStore();
+  const { session } = useAuth();
   const { notify } = useToast();
   const { canInstall, installed, install } = useInstallPrompt();
 
@@ -27,7 +29,9 @@ export function WelcomePage() {
       <div className="welcome__texture" aria-hidden="true" />
       <header className="welcome__top">
         <Brand />
-        <span className="welcome__badge"><ShieldCheck size={14} /> Data di HP sendiri</span>
+        <span className="welcome__badge">
+          {session ? <><Cloud size={14} /> Tersimpan di akun Anda</> : <><ShieldCheck size={14} /> Data di HP sendiri</>}
+        </span>
       </header>
       <main className="welcome__main">
         <section className="welcome__copy">
@@ -51,7 +55,10 @@ export function WelcomePage() {
             </Button>
           </div>
           <p className="welcome__note">
-            <CloudOff size={14} /> Tanpa akun, tanpa langganan. Bekerja luring setelah dibuka pertama kali.
+            <CloudOff size={14} />{' '}
+            {session
+              ? 'Data tersinkron ke akun Anda dan tetap bisa dibuka saat sinyal buruk.'
+              : 'Tanpa akun, tanpa langganan. Bekerja luring setelah dibuka pertama kali.'}
           </p>
           {canInstall && !installed ? (
             <button type="button" className="welcome__install" onClick={() => void install()}>

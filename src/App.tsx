@@ -1,10 +1,13 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { StoreProvider, useStore } from './store/StoreContext';
+import { AuthProvider, useAuth } from './store/AuthContext';
+import { SyncProvider } from './store/SyncContext';
 import { ToastProvider } from './components/Toast';
 import { AppShell } from './components/AppShell';
 import { matchRoute, useLocation, useScrollTopOnNavigate } from './lib/router';
 import { useDocumentTitle } from './lib/hooks';
 import { WelcomePage } from './pages/WelcomePage';
+import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SalePage } from './pages/SalePage';
 import { ConsignmentsPage } from './pages/ConsignmentsPage';
@@ -20,7 +23,7 @@ import { HistoryPage } from './pages/HistoryPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { OrderCatalogPage } from './pages/OrderCatalogPage';
 import { Button, Card, EmptyState } from './components/ui';
-import { EmptyBowl } from './components/Brand';
+import { Brand, EmptyBowl } from './components/Brand';
 import { navigate } from './lib/router';
 
 const TITLES: Array<[string, string]> = [
@@ -35,15 +38,34 @@ const TITLES: Array<[string, string]> = [
   ['/pengaturan', 'Pengaturan'],
 ];
 
+function LoadingScreen() {
+  return (
+    <div className="boot-screen">
+      <Brand />
+      <div className="boot-screen__progress" aria-hidden="true"><span /></div>
+      <p>Menyiapkan data usaha…</p>
+    </div>
+  );
+}
+
 function Router() {
   const location = useLocation();
   const { state } = useStore();
+  const { cloudEnabled, session, offline, status } = useAuth();
   useScrollTopOnNavigate(location.path);
   const pageTitle = TITLES.find(([path]) => location.path === path)?.[1]
     ?? (location.path.startsWith('/titip') ? 'Titipan' : location.path.startsWith('/warung') ? 'Warung' : location.path.startsWith('/bahan') ? 'Bahan & belanja' : 'Caca Bumbu');
   useDocumentTitle(pageTitle);
 
+  // Katalog pesanan bersifat publik: warung tidak perlu akun.
   if (location.path === '/katalog') return <OrderCatalogPage />;
+
+  if (status === 'loading') return <LoadingScreen />;
+
+  if (location.path === '/masuk') return <AuthPage />;
+
+  const needsAccount = cloudEnabled && !session && !offline;
+  if (needsAccount) return <AuthPage />;
 
   if (!state.meta.onboarded) return <WelcomePage />;
 
@@ -109,9 +131,13 @@ export default function App() {
   return (
     <AppErrorBoundary>
       <StoreProvider>
-        <ToastProvider>
-          <Router />
-        </ToastProvider>
+        <AuthProvider>
+          <SyncProvider>
+            <ToastProvider>
+              <Router />
+            </ToastProvider>
+          </SyncProvider>
+        </AuthProvider>
       </StoreProvider>
     </AppErrorBoundary>
   );
