@@ -8,6 +8,13 @@ async function clearToasts(page) {
   const count = await closers.count();
   for (let i = 0; i < count; i++) { try { await closers.nth(0).click({ timeout: 400 }); } catch {} }
 }
+async function skipAuth(page) {
+  const btn = page.getByRole('button', { name: 'Lanjut tanpa akun' });
+  if (await btn.count()) {
+    await btn.click();
+    await page.waitForTimeout(450);
+  }
+}
 async function prep(page, url) {
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(550);
@@ -23,6 +30,7 @@ async function prep(page, url) {
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
+  await skipAuth(page);
   await page.screenshot({ path: 'docs/screenshots/welcome-mobile.png' });
   await page.getByRole('button', { name: 'Coba dengan data contoh' }).click();
   await page.waitForTimeout(700);
@@ -59,6 +67,7 @@ async function prep(page, url) {
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
+  await skipAuth(page);
   await page.screenshot({ path: 'docs/screenshots/welcome-desktop.png' });
   await page.getByRole('button', { name: 'Coba dengan data contoh' }).click();
   await page.waitForTimeout(700);
