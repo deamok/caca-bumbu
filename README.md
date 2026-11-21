@@ -2,6 +2,9 @@
 
 Aplikasi web **mobile-first / PWA** untuk usaha bumbu rumahan: jual langsung, titipan warung, hitung laku berkala, setoran, stok, dan analisa usaha. Dibuat agar nyaman dipakai satu tangan di HP Android dan tetap bisa dibuka saat sinyal di warung sedang buruk.
 
+**Aplikasi live:** https://deamok.github.io/caca-bumbu/  
+**Repository:** https://github.com/deamok/caca-bumbu
+
 ![Dashboard Caca Bumbu](docs/screenshots/dashboard-mobile.png)
 
 | Kasir langsung | Hitung titipan |
@@ -50,6 +53,8 @@ pnpm preview
 ```
 
 Folder hasil build ada di `dist/`. Unggah ke hosting statis apa pun (Vercel, Netlify, Cloudflare Pages, GitHub Pages, cPanel). **Service worker dan pemasangan PWA memerlukan HTTPS** (atau localhost saat pengembangan).
+
+Repository ini memakai GitHub Pages dengan source branch **`gh-pages`**. Branch tersebut berisi isi `dist/`, sedangkan source code berada di `main`.
 
 ### Memasang di Android
 
@@ -126,6 +131,7 @@ scripts/
   e2e.mjs          uji alur utama (butuh preview server)
   e2e-clean.mjs    uji mulai dari nol
   pwa-check.mjs    uji manifest, ikon, service worker, offline
+  live-check.mjs   uji aplikasi yang sudah live di GitHub Pages
 ```
 
 Logika bisnis ada di [src/lib/domain.ts](src/lib/domain.ts), analisa di [src/lib/analytics.ts](src/lib/analytics.ts). Semua operasi stok, titipan, pembayaran, dan pembelian diuji lewat Vitest.
@@ -145,6 +151,7 @@ node scripts/e2e.mjs
 node scripts/e2e-clean.mjs
 node scripts/e2e-payment.mjs
 node scripts/pwa-check.mjs
+node scripts/live-check.mjs
 ```
 
 ## Batasan versi ini

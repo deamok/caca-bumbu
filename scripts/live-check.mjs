@@ -1,0 +1,48 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+const BASE = 'https://deamok.github.io/caca-bumbu/';
+const browser = await chromium.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true });
+const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'id-ID', timezoneId: 'Asia/Jakarta' });
+const page = await context.newPage();
+const errors = [];
+page.on('pageerror', e => errors.push(e.message));
+page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+for (const path of ['', 'manifest.webmanifest', 'sw.js', 'icons/icon-192.png', 'icons/icon-512.png']) {
+  const res = await context.request.get(BASE + path);
+  console.log(path || 'index', res.status(), res.headers()['content-type']);
+  assert.equal(res.status(), 200, 'asset harus 200: ' + path);
+}
+await page.goto(BASE, { waitUntil: 'networkidle' });
+console.log('title', await page.title());
+await page.getByRole('button', { name: 'Coba dengan data contoh' }).click();
+await page.waitForTimeout(900);
+assert.ok(await page.getByText(/Selamat (pagi|siang|sore|malam), Caca/).isVisible(), 'dashboard tampil');
+console.log('demo dashboard OK');
+const state = await page.evaluate(() => JSON.parse(localStorage.getItem('caca-bumbu:state:v1')));
+assert.ok(state.products.length === 10, '10 produk');
+await page.goto(BASE + '#/katalog', { waitUntil: 'networkidle' });
+assert.ok(await page.getByText('Bumbu siap masak,').isVisible(), 'katalog tampil');
+console.log('catalog direct hash OK');
+await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.waitForTimeout(800);
+const sw = await page.evaluate(async () => {
+  const registration = await navigator.serviceWorker.ready;
+  return { scope: registration.scope, active: Boolean(registration.active), controller: Boolean(navigator.serviceWorker.controller) };
+});
+console.log('service worker', sw);
+assert.equal(sw.active, true);
+assert.ok(sw.scope.includes('/caca-bumbu/'), 'scope PWA di subpath');
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(500);
+const controlled = await page.evaluate(() => Boolean(navigator.serviceWorker.controller));
+console.log('controlled', controlled);
+assert.equal(controlled, true);
+await context.setOffline(true);
+await page.reload({ waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(700);
+assert.ok(await page.getByText(/Selamat (pagi|siang|sore|malam), Caca/).isVisible(), 'offline tampil');
+console.log('OFFLINE LIVE OK');
+await context.setOffline(false);
+assert.deepEqual(errors, []);
+console.log('LIVE DEPLOY OK');
+await browser.close();

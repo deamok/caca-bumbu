@@ -29,5 +29,19 @@
     "typescript": "~5.7.3",
     "vite": "^6.4.6",
     "vitest": "^3.2.7"
-  }
+  },
+  "homepage": "https://deamok.github.io/caca-bumbu/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deamok/caca-bumbu.git"
+  },
+  "author": "deamok",
+  "keywords": [
+    "bumbu",
+    "umkm",
+    "warung",
+    "pwa",
+    "react",
+    "indonesia"
+  ]
 }
