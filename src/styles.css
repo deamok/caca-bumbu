@@ -37,6 +37,8 @@
   --sidebar-w: 272px;
   --bottom-nav-h: 76px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Ruang ekstra bila hosting menyisipkan badge promosi di sudut bawah. */
+  --host-badge-offset: 0px;
 }
 
 *,

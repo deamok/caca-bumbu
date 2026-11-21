@@ -12,6 +12,7 @@
 
 @media (max-width: 1024px) {
   :root { --bottom-nav-h: 66px; }
+  html.has-hosting-badge { --host-badge-offset: 64px; }
   .sidebar { display: none; }
   .app-main { width: 100%; margin-left: 0; }
   .desktop-topbar { display: none; }
@@ -36,7 +37,7 @@
   .mobile-topbar__actions { display: flex; align-items: center; gap: 5px; }
   .mobile-topbar__actions .icon-btn { border-color: var(--line); background: rgba(255, 253, 248, 0.7); }
   .topbar-due { color: var(--gold); font-size: 10px; }
-  .page { width: 100%; max-width: none; padding: 22px 20px 104px; }
+  .page { width: 100%; max-width: none; padding: 22px 20px calc(104px + var(--host-badge-offset)); }
   .bottom-nav {
     position: fixed;
     right: 0;
@@ -53,11 +54,17 @@
     backdrop-filter: blur(16px);
   }
   .bottom-nav__item { position: relative; display: flex; min-width: 0; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 2px; border: 0; background: transparent; color: #939b92; font-size: 8px; font-weight: 600; }
+  /* Badge hosting menempati sudut bawah: tinggikan bilah nav, item tetap di atas. */
+  html.has-hosting-badge .bottom-nav {
+    height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + var(--host-badge-offset));
+    align-items: start;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--host-badge-offset));
+  }
   .bottom-nav__icon { position: relative; display: inline-flex; width: 32px; height: 27px; align-items: center; justify-content: center; border-radius: 8px; }
   .bottom-nav__item.is-active { color: var(--green); font-weight: 800; }
   .bottom-nav__item.is-active .bottom-nav__icon { background: var(--green-soft); }
   .bottom-nav__item.is-active .bottom-nav__icon i { position: absolute; bottom: 3px; width: 3px; height: 3px; border-radius: 50%; background: var(--green); }
-  .toast-stack { right: 14px; bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 84px); }
+  .toast-stack { right: 14px; bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 84px + var(--host-badge-offset)); }
   .quick-actions { grid-template-columns: repeat(4, 1fr); }
   .dashboard-grid { grid-template-columns: minmax(0, 1fr) 300px; }
   .form-layout__side, .reconcile-layout__side { top: 74px; }
@@ -69,11 +76,11 @@
 @media (max-width: 900px) {
   .sale-layout { grid-template-columns: 1fr; }
   .sale-summary { display: none; }
-  .sale-page { padding-bottom: 152px; }
+  .sale-page { padding-bottom: calc(152px + var(--host-badge-offset)); }
   .cart-bar {
     position: fixed;
     right: 0;
-    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + var(--host-badge-offset));
     left: 0;
     z-index: 24;
     display: flex;
@@ -93,11 +100,11 @@
   .cart-bar .btn { min-width: 130px; }
   .form-layout { grid-template-columns: 1fr; }
   .form-layout__side { display: none; }
-  .new-consignment-page, .purchase-form-page { padding-bottom: 150px; }
+  .new-consignment-page, .purchase-form-page { padding-bottom: calc(150px + var(--host-badge-offset)); }
   .form-dock {
     position: fixed;
     right: 0;
-    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + var(--host-badge-offset));
     left: 0;
     z-index: 24;
     display: flex;

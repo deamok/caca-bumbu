@@ -5,7 +5,7 @@ Aplikasi web **mobile-first / PWA** untuk usaha bumbu rumahan: jual langsung, ti
 Data usaha disimpan di **Supabase** (akun email + password, PostgreSQL dengan RLS) dan tetap tersedia luring di perangkat lewat cache lokal. Deploy produksi memakai **Netlify**.
 
 **Repository:** https://github.com/deamok/caca-bumbu  
-**Aplikasi live:** _(isi URL Netlify setelah deploy pertama, mis. https://caca-bumbu.netlify.app)_
+**Aplikasi live:** https://caca-bumbu.netlify.app
 
 ![Dashboard Caca Bumbu](docs/screenshots/dashboard-mobile.png)
 
@@ -123,7 +123,9 @@ Catatan penting:
 
 - **Service worker dan pemasangan PWA memerlukan HTTPS.** Netlify otomatis memberi HTTPS.
 - Tanpa dua environment variable di atas, build Netlify akan berjalan dalam **mode lokal** (tanpa login/cloud). Halaman login hanya muncul bila kredensial terpasang.
-- `netlify.toml` sudah mengatur cache: aset ber-hash `immutable`, `sw.js` selalu segar, dan header keamanan dasar.
+- `netlify.toml` dan [public/_headers](public/_headers) mengatur cache: aset ber-hash `immutable`, `sw.js` selalu segar, manifest bertipe `application/manifest+json`, plus header keamanan dasar.
+- **Netlify free plan** menyisipkan badge "Powered by Netlify" di sudut bawah situs. Aplikasi mendeteksi badge itu ([src/main.tsx](src/main.tsx)) dan menaikkan bilah navigasi bawah supaya tidak ada tombol yang tertutup. Badge bisa ditutup pengunjung, dan bisa dihilangkan permanen dengan upgrade paket Netlify.
+- Bila clone repo oleh Netlify gagal (`Host key verification failed`), buka **Project configuration → Build & deploy → Repository → Link repository** lalu setujui akses GitHub. Setelah itu push ke `main` otomatis memicu build; sebelum itu, deploy manual bisa dilakukan dengan mengunggah isi `dist/` dari halaman **Deploys**.
 
 ## Alur kerja yang disarankan
 

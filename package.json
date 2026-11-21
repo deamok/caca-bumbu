@@ -38,7 +38,7 @@
     "vite": "^6.4.6",
     "vitest": "^3.2.7"
   },
-  "homepage": "https://deamok.github.io/caca-bumbu/",
+  "homepage": "https://caca-bumbu.netlify.app",
   "repository": {
     "type": "git",
     "url": "https://github.com/deamok/caca-bumbu.git"

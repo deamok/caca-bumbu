@@ -18,6 +18,29 @@ import App from './App';
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
+/**
+ * Sebagian hosting (mis. Netlify free) menyisipkan iframe badge promosi di
+ * sudut bawah. Saat badge muncul, tambahkan kelas pada <html> supaya navigasi
+ * bawah dan tombol aksi tidak tertutup (lihat --host-badge-offset di CSS).
+ */
+function trackHostingBadge(): void {
+  const root = document.documentElement;
+  const sync = () => {
+    root.classList.toggle('has-hosting-badge', Boolean(document.getElementById('nl-badge-frame')));
+  };
+  const start = () => {
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('load', sync);
+    window.setTimeout(sync, 1200);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+}
+
+trackHostingBadge();
+
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Elemen root tidak ditemukan');
 createRoot(rootElement).render(
