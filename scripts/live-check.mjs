@@ -8,11 +8,11 @@ const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 for (const path of ['', 'manifest.webmanifest', 'sw.js', 'icons/icon-192.png', 'icons/icon-512.png']) {
-  const res = await context.request.get(BASE + path);
+  const res = await context.request.get(BASE + path, { headers: { 'Cache-Control': 'no-cache' } });
   console.log(path || 'index', res.status(), res.headers()['content-type']);
   assert.equal(res.status(), 200, 'asset harus 200: ' + path);
 }
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '?v=' + Date.now(), { waitUntil: 'networkidle' });
 console.log('title', await page.title());
 await page.getByRole('button', { name: 'Coba dengan data contoh' }).click();
 await page.waitForTimeout(900);
@@ -20,9 +20,37 @@ assert.ok(await page.getByText(/Selamat (pagi|siang|sore|malam), Caca/).isVisibl
 console.log('demo dashboard OK');
 const state = await page.evaluate(() => JSON.parse(localStorage.getItem('caca-bumbu:state:v1')));
 assert.ok(state.products.length === 10, '10 produk');
-await page.goto(BASE + '#/katalog', { waitUntil: 'networkidle' });
-assert.ok(await page.getByText('Bumbu siap masak,').isVisible(), 'katalog tampil');
-console.log('catalog direct hash OK');
+
+// Buat link katalog snapshot lalu buka di konteks "perangkat warung"
+await page.goto(BASE + '#/pengaturan', { waitUntil: 'networkidle' });
+await page.locator('#settings-wa').fill('081234567890');
+await page.getByRole('button', { name: 'Simpan pengaturan' }).click();
+await page.waitForTimeout(400);
+const sharedLink = (await page.locator('.catalog-preview code').innerText()).trim();
+assert.ok(sharedLink.includes('#/katalog?d='), 'link katalog membawa snapshot');
+console.log('shared link length', sharedLink.length);
+
+const customerContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'id-ID', timezoneId: 'Asia/Jakarta' });
+const customerPage = await customerContext.newPage();
+customerPage.on('pageerror', e => errors.push('customer: ' + e.message));
+customerPage.on('console', m => { if (m.type() === 'error') errors.push('customer: ' + m.text()); });
+await customerPage.goto(BASE + '#/katalog', { waitUntil: 'networkidle' });
+assert.ok(await customerPage.getByText('Katalog belum dibagikan').isVisible(), 'katalog tanpa snapshot ditolak');
+await customerPage.goto(sharedLink, { waitUntil: 'networkidle' });
+assert.ok(await customerPage.getByText('Dapur Caca').first().isVisible(), 'identitas penjual terbaca');
+assert.ok(await customerPage.getByText('Tanya penjual').isVisible(), 'WhatsApp penjual terbaca');
+await customerPage.locator('.catalog-add').first().click();
+await customerPage.getByRole('button', { name: 'Pesan sekarang' }).click();
+await customerPage.getByLabel('Nama pemesan').fill('Bu Sari');
+await customerPage.evaluate(() => { window.__waUrl = ''; window.open = (url) => { window.__waUrl = String(url); return null; }; });
+await customerPage.getByRole('button', { name: 'Kirim lewat WhatsApp' }).click();
+await customerPage.waitForTimeout(200);
+const waUrl = await customerPage.evaluate(() => window.__waUrl);
+assert.ok(waUrl.includes('wa.me/6281234567890'), 'nomor WhatsApp tujuan benar');
+assert.ok(decodeURIComponent(waUrl).includes('Bu Sari'), 'nama pemesan pada pesan');
+console.log('LIVE SHARED CATALOG OK');
+await customerContext.close();
+
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForTimeout(800);
 const sw = await page.evaluate(async () => {
