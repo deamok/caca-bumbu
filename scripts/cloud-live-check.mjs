@@ -63,9 +63,9 @@ const browser = await chromium.launch({
   headless: true,
 });
 
-// Netlify free plan menyisipkan iframe badge di sudut bawah; dibuang hanya
+// Beberapa hosting menyisipkan iframe badge di sudut bawah; dibuang hanya
 // selama pengujian agar klik tidak terhalang (tidak menyentuh kode aplikasi).
-const removeNetlifyBadge = () => {
+const removeHostingBadge = () => {
   const start = () => {
     setInterval(() => document.getElementById('nl-badge-frame')?.remove(), 250);
   };
@@ -97,7 +97,7 @@ try {
   }
 
   const deviceA = await browser.newContext(contextOptions);
-  await deviceA.addInitScript(removeNetlifyBadge);
+  await deviceA.addInitScript(removeHostingBadge);
   const pageA = await deviceA.newPage();
   pageA.on('pageerror', (error) => errors.push('A: ' + error.message));
   pageA.on('console', (message) => {
@@ -144,7 +144,7 @@ try {
 
   // 5. Perangkat kedua: masuk dengan akun yang sama → menerima data cloud
   const deviceB = await browser.newContext(contextOptions);
-  await deviceB.addInitScript(removeNetlifyBadge);
+  await deviceB.addInitScript(removeHostingBadge);
   const pageB = await deviceB.newPage();
   pageB.on('pageerror', (error) => errors.push('B: ' + error.message));
   pageB.on('console', (message) => {

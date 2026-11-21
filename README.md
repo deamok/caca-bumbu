@@ -2,10 +2,10 @@
 
 Aplikasi web **mobile-first / PWA** untuk usaha bumbu rumahan: jual langsung, titipan warung, hitung laku berkala, setoran, stok, dan analisa usaha. Dibuat agar nyaman dipakai satu tangan di HP Android dan tetap bisa dibuka saat sinyal di warung sedang buruk.
 
-Data usaha disimpan di **Supabase** (akun email + password, PostgreSQL dengan RLS) dan tetap tersedia luring di perangkat lewat cache lokal. Deploy produksi memakai **Netlify**.
+Data usaha disimpan di **Supabase** (akun email + password, PostgreSQL dengan RLS) dan tetap tersedia luring di perangkat lewat cache lokal. Deploy produksi memakai **Vercel**.
 
 **Repository:** https://github.com/deamok/caca-bumbu  
-**Aplikasi live:** https://caca-bumbu.netlify.app
+**Aplikasi live:** https://caca-bumbu.vercel.app
 
 ![Dashboard Caca Bumbu](docs/screenshots/dashboard-mobile.png)
 
@@ -103,29 +103,28 @@ Detail tabel, kebijakan RLS, dan alur sinkronisasi ada di [docs/migrasi-supabase
 
 Saat pengguna pertama kali masuk, data lokal di perangkat otomatis diunggah ke akun tersebut. Perangkat berikutnya cukup masuk dengan akun yang sama.
 
-## Deploy ke Netlify
+## Deploy ke Vercel
 
-Deploy memakai Git (continuous deployment), bukan upload manual.
+Deploy memakai Git: setiap push ke `main` otomatis build dan deploy.
 
-1. Push repository ke GitHub (branch `main`).
-2. Netlify → **Add new site → Import an existing project → GitHub** → pilih repo `caca-bumbu`.
-3. Build command `pnpm build`, publish directory `dist`, dan Node 22 sudah diatur oleh [netlify.toml](netlify.toml). Tidak perlu diubah manual.
-4. **Site configuration → Environment variables** → tambahkan:
+1. Project Vercel `caca-bumbu` terhubung ke repo `deamok/caca-bumbu` (branch `main`).
+2. Build memakai [vercel.json](vercel.json): framework Vite, `pnpm build`, output `dist`, Node 24.
+3. Environment variables yang wajib ada (sudah diisi di project):
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-5. **Deploy site**. Setiap push ke `main` akan otomatis build ulang.
-6. Sesuaikan **Authentication → URL Configuration** di Supabase:
-   - **Site URL**: `https://<nama-site>.netlify.app`
-   - **Redirect URLs**: `https://<nama-site>.netlify.app/**` (tambahkan juga `http://127.0.0.1:4173/**` untuk pengembangan lokal)
-7. (Opsional) Atur custom domain di Netlify, lalu perbarui Site URL dan Redirect URLs di Supabase.
+4. Domain produksi: **https://caca-bumbu.vercel.app**
+5. Supabase → **Authentication → URL Configuration**:
+   - **Site URL**: `https://caca-bumbu.vercel.app`
+   - **Redirect URLs**: `https://caca-bumbu.vercel.app/**` (tambahkan juga `http://127.0.0.1:4173/**` untuk pengembangan lokal)
+6. Push ke `main` → Vercel otomatis build. Pantau di tab **Deployments**.
 
 Catatan penting:
 
-- **Service worker dan pemasangan PWA memerlukan HTTPS.** Netlify otomatis memberi HTTPS.
-- Tanpa dua environment variable di atas, build Netlify akan berjalan dalam **mode lokal** (tanpa login/cloud). Halaman login hanya muncul bila kredensial terpasang.
-- `netlify.toml` dan [public/_headers](public/_headers) mengatur cache: aset ber-hash `immutable`, `sw.js` selalu segar, manifest bertipe `application/manifest+json`, plus header keamanan dasar.
-- **Netlify free plan** menyisipkan badge "Powered by Netlify" di sudut bawah situs. Aplikasi mendeteksi badge itu ([src/main.tsx](src/main.tsx)) dan menaikkan bilah navigasi bawah supaya tidak ada tombol yang tertutup. Badge bisa ditutup pengunjung, dan bisa dihilangkan permanen dengan upgrade paket Netlify.
-- Bila clone repo oleh Netlify gagal (`Host key verification failed`), buka **Project configuration → Build & deploy → Repository → Link repository** lalu setujui akses GitHub. Setelah itu push ke `main` otomatis memicu build; sebelum itu, deploy manual bisa dilakukan dengan mengunggah isi `dist/` dari halaman **Deploys**.
+- **Service worker dan pemasangan PWA memerlukan HTTPS.** Vercel otomatis memberi HTTPS.
+- Tanpa dua environment variable di atas, build akan berjalan dalam **mode lokal** (tanpa login/cloud). Halaman login hanya muncul bila kredensial terpasang.
+- [vercel.json](vercel.json) mengatur cache: aset ber-hash `immutable`, `sw.js` selalu segar, manifest bertipe `application/manifest+json`, plus header keamanan dasar.
+- Paket **Hobby Vercel** ditujukan untuk proyek non-komersial. Untuk pemakaian usaha komersial, aktifkan paket Pro atau gunakan hosting statis lain (aplikasi tetap kompatibel).
+- Site Netlify lama (`caca-bumbu.netlify.app`) sudah dipensiunkan.
 
 ## Alur kerja yang disarankan
 
@@ -184,7 +183,7 @@ Link katalog membawa **snapshot** nama usaha, daftar produk, harga, stok, dan no
 - Manifest + service worker buatan sendiri (offline-first)
 - Vitest untuk logika domain dan pemetaan data cloud
 - Playwright untuk uji alur, PWA, dan tangkapan layar
-- Netlify untuk hosting statis
+- Vercel untuk hosting statis
 
 ## Struktur proyek
 
@@ -219,7 +218,7 @@ scripts/
   e2e-clean.mjs       uji mulai dari nol
   e2e-payment.mjs     uji pelunasan piutang
   pwa-check.mjs       uji manifest, ikon, service worker, offline
-  live-check.mjs      uji aplikasi live (isi URL Netlify)
+  live-check.mjs      uji aplikasi live (isi URL Vercel)
 ```
 
 Logika bisnis ada di [src/lib/domain.ts](src/lib/domain.ts), analisa di [src/lib/analytics.ts](src/lib/analytics.ts), pemetaan database di [src/lib/cloudSchema.ts](src/lib/cloudSchema.ts).
@@ -244,7 +243,7 @@ node scripts/pwa-check.mjs
 Uji aplikasi live memakai `BASE` dari environment:
 
 ```bash
-APP_URL=https://caca-bumbu.netlify.app node scripts/live-check.mjs
+APP_URL=https://caca-bumbu.vercel.app node scripts/live-check.mjs
 ```
 
 Uji alur cloud (login, unggah awal, diff, antrean luring, perangkat kedua, hapus data) memakai **Supabase tiruan** di dalam Playwright — tidak butuh akun atau jaringan:

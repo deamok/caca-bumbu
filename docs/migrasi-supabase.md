@@ -1,6 +1,6 @@
 # Migrasi ke Supabase
 
-Dokumen ini menjelaskan apa yang berubah dari versi 1.0 (lokal murni) ke versi 2.0 (Supabase + Netlify), bentuk skema database, aturan akses, dan cara kerja sinkronisasi.
+Dokumen ini menjelaskan apa yang berubah dari versi 1.0 (lokal murni) ke versi 2.0 (Supabase + Vercel), bentuk skema database, aturan akses, dan cara kerja sinkronisasi.
 
 ## Ringkasan perubahan
 
@@ -10,7 +10,7 @@ Dokumen ini menjelaskan apa yang berubah dari versi 1.0 (lokal murni) ke versi 2
 | Akun | Tidak ada | Email + password (Supabase Auth) |
 | Perangkat | Satu | Banyak perangkat, satu akun |
 | Luring | Ya | Ya (baca + tulis, dikirim saat online) |
-| Hosting | GitHub Pages (`gh-pages`) | Netlify (Git deploy dari `main`) |
+| Hosting | GitHub Pages (`gh-pages`) | Vercel (Git deploy dari `main`) |
 | Data tidak sengaja hilang | Bergantung backup manual | Cloud + backup manual |
 
 ## Tabel database
@@ -75,7 +75,7 @@ Karena fungsi-fungsi ini murni, semuanya diuji tanpa jaringan di [src/lib/cloudS
 ## Keamanan
 
 - Hanya `anon key` yang ada di aplikasi web. Kunci ini tidak memberi akses ke data akun lain karena RLS memeriksa `auth.uid()`.
-- Jangan pernah memakai `service_role key` di frontend atau menyimpannya di Netlify sebagai `VITE_*` (semua `VITE_*` ikut ter-bundle ke browser).
+- Jangan pernah memakai `service_role key` di frontend atau menyimpannya di dashboard hosting sebagai `VITE_*` (semua `VITE_*` ikut ter-bundle ke browser).
 - Access token Supabase (untuk `pnpm db:apply`) hanya dipakai di komputer pengembang dan tidak boleh di-commit.
 - Katalog publik (`#/katalog?d=…`) tidak membaca database; ia memakai snapshot yang dikodekan di URL, jadi tetap aman dibagikan ke warung tanpa login.
 
@@ -102,4 +102,4 @@ unset VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY && pnpm dev
 | Data tidak muncul di perangkat kedua | Salah akun, atau `user_id` berbeda | Pastikan login dengan email yang sama, cek **Pengaturan → Akun** |
 | Status "Sinkron gagal" terus | `anon key` salah / RLS belum aktif / offline | Cek Network tab ke `/rest/v1/...`, pastikan `VITE_*` benar saat build |
 | Perubahan dari HP lain tidak masuk | Aplikasi di latar belakang | Buka kembali aplikasi (fokus) atau tekan **Sinkronkan sekarang** |
-| Build Netlify sukses tapi login tidak muncul | Environment variable belum diisi | Tambahkan `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`, lalu redeploy |
+| Build Vercel sukses tapi login tidak muncul | Environment variable belum diisi | Tambahkan `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`, lalu redeploy |

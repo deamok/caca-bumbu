@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 
-const BASE = `${(process.env.APP_URL || 'https://caca-bumbu.netlify.app').replace(/\/$/, '')}/`;
+const BASE = `${(process.env.APP_URL || 'https://caca-bumbu.vercel.app').replace(/\/$/, '')}/`;
 const browser = await chromium.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'id-ID', timezoneId: 'Asia/Jakarta' });
 const page = await context.newPage();
@@ -9,9 +9,9 @@ const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 
-// Netlify free plan menyisipkan iframe badge di sudut bawah; dibuang hanya
+// Beberapa hosting menyisipkan iframe badge di sudut bawah; dibuang hanya
 // selama pengujian agar klik tidak terhalang.
-const dropNetlifyBadge = async (target) => {
+const dropHostingBadge = async (target) => {
   await target.evaluate(() => document.getElementById('nl-badge-frame')?.remove()).catch(() => {});
 };
 
@@ -23,7 +23,7 @@ for (const path of ['', 'manifest.webmanifest', 'sw.js', 'icons/icon-192.png', '
 }
 
 await page.goto(BASE + '?v=' + Date.now(), { waitUntil: 'networkidle' });
-await dropNetlifyBadge(page);
+await dropHostingBadge(page);
 console.log('title', await page.title());
 
 // Bila build memakai Supabase, halaman login tampil lebih dulu.
@@ -43,7 +43,7 @@ assert.ok(state.products.length === 10, '10 produk');
 
 // Buat link katalog snapshot lalu buka di konteks "perangkat warung"
 await page.goto(BASE + '#/pengaturan', { waitUntil: 'networkidle' });
-await dropNetlifyBadge(page);
+await dropHostingBadge(page);
 await page.locator('#settings-wa').fill('081234567890');
 await page.getByRole('button', { name: 'Simpan pengaturan' }).click();
 await page.waitForTimeout(400);
@@ -56,10 +56,10 @@ const customerPage = await customerContext.newPage();
 customerPage.on('pageerror', e => errors.push('customer: ' + e.message));
 customerPage.on('console', m => { if (m.type() === 'error') errors.push('customer: ' + m.text()); });
 await customerPage.goto(BASE + '#/katalog', { waitUntil: 'networkidle' });
-await dropNetlifyBadge(customerPage);
+await dropHostingBadge(customerPage);
 assert.ok(await customerPage.getByText('Katalog belum dibagikan').isVisible(), 'katalog tanpa snapshot ditolak');
 await customerPage.goto(sharedLink, { waitUntil: 'networkidle' });
-await dropNetlifyBadge(customerPage);
+await dropHostingBadge(customerPage);
 assert.ok(await customerPage.getByText('Dapur Caca').first().isVisible(), 'identitas penjual terbaca');
 assert.ok(await customerPage.getByText('Tanya penjual').isVisible(), 'WhatsApp penjual terbaca');
 await customerPage.locator('.catalog-add').first().click();
@@ -75,7 +75,7 @@ console.log('LIVE SHARED CATALOG OK');
 await customerContext.close();
 
 await page.goto(BASE, { waitUntil: 'networkidle' });
-await dropNetlifyBadge(page);
+await dropHostingBadge(page);
 await page.waitForTimeout(800);
 const sw = await page.evaluate(async () => {
   const registration = await navigator.serviceWorker.ready;
