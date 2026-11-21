@@ -31,7 +31,7 @@ import {
   Sheet,
   Textarea,
 } from '../components/ui';
-import { catalogUrl } from '../components/AppShell';
+import { sharedCatalogUrl } from '../lib/catalog';
 import { useInstallPrompt, useShare } from '../lib/hooks';
 import { exportState, parseBackup } from '../lib/storage';
 import { createDemoState } from '../data/seed';
@@ -92,7 +92,7 @@ export function SettingsPage() {
     const result = await share({
       title: `Katalog ${businessName}`,
       text: `Pesan bumbu rumahan dari ${businessName}. Pilih bumbu, kirim pesanan lewat WhatsApp.`,
-      url: catalogUrl(),
+      url: sharedCatalogUrl(state),
     });
     if (result === 'copied') notify('Link katalog disalin', { message: 'Kirim ke warung lewat WhatsApp.' });
     if (result === 'failed') notify('Belum bisa membagikan link', { tone: 'error' });
@@ -177,12 +177,12 @@ export function SettingsPage() {
               <div>
                 <strong>{businessName || 'Caca Bumbu'}</strong>
                 <p>{normalizePhone(whatsapp) ? `Pesanan diarahkan ke WhatsApp ${whatsapp}` : 'Nomor WhatsApp belum diatur, katalog belum bisa menerima pesanan.'}</p>
-                <code>{catalogUrl()}</code>
+                <code>{sharedCatalogUrl(state)}</code>
               </div>
             </div>
             <div className="settings-actions">
               <Button variant="secondary" onClick={shareCatalog} icon={<Share2 size={16} />}>Bagikan katalog</Button>
-              <Button variant="ghost" onClick={() => window.open(catalogUrl(), '_blank')} iconAfter={<ArrowRight size={15} />}>Lihat katalog</Button>
+              <Button variant="ghost" onClick={() => window.open(sharedCatalogUrl(state), '_blank')} iconAfter={<ArrowRight size={15} />}>Lihat katalog</Button>
             </div>
             {!normalizePhone(whatsapp) ? (
               <div className="notice notice--warning"><Info size={17} /><div>Isi nomor WhatsApp lalu simpan, supaya pesanan dari katalog bisa masuk.</div></div>

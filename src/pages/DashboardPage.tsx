@@ -22,7 +22,7 @@ import { RevenueBars } from '../components/charts';
 import { useToast } from '../components/Toast';
 import { navigate } from '../lib/router';
 import { formatDate, formatDayMonth, greeting, dueLabel, todayKey } from '../lib/date';
-import { formatMoney } from '../lib/format';
+import { formatMoney, normalizePhone } from '../lib/format';
 import {
   activeConsignments,
   consignmentOutstandingValue,
@@ -33,7 +33,7 @@ import {
   outstandingTotal,
 } from '../lib/domain';
 import { dailySeries, productPerformance, todaySummary } from '../lib/analytics';
-import { catalogUrl } from '../components/AppShell';
+import { sharedCatalogUrl } from '../lib/catalog';
 import { useShare } from '../lib/hooks';
 
 export function DashboardPage() {
@@ -55,7 +55,7 @@ export function DashboardPage() {
   const owner = state.settings.ownerName || 'Ibu';
 
   const shareCatalog = async () => {
-    if (!state.settings.whatsapp.trim()) {
+    if (!normalizePhone(state.settings.whatsapp)) {
       notify('Atur nomor WhatsApp dulu', { tone: 'error', message: 'Nomor ini dipakai untuk menerima pesanan dari katalog.' });
       navigate('/pengaturan');
       return;
@@ -63,7 +63,7 @@ export function DashboardPage() {
     const result = await share({
       title: 'Katalog Caca Bumbu',
       text: `Pesan bumbu rumahan dari ${state.settings.businessName}. Pilih bumbu, kirim pesanan lewat WhatsApp.`,
-      url: catalogUrl(),
+      url: sharedCatalogUrl(state),
     });
     if (result === 'copied') notify('Link katalog disalin', { message: 'Kirim ke warung lewat WhatsApp.' });
     if (result === 'failed') notify('Belum bisa membagikan link', { tone: 'error' });

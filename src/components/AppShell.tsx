@@ -22,7 +22,9 @@ import { navigate, pathStartsWith, useLocation } from '../lib/router';
 import { useInstallPrompt, useOnlineStatus, useShare } from '../lib/hooks';
 import { useToast } from './Toast';
 import { formatDate, todayKey } from '../lib/date';
+import { normalizePhone } from '../lib/format';
 import { outstandingTotal } from '../lib/domain';
+import { sharedCatalogUrl } from '../lib/catalog';
 
 const MAIN_NAV = [
   { to: '/', label: 'Beranda', icon: Home, exact: true },
@@ -43,11 +45,6 @@ function isActive(path: string, to: string, exact = false): boolean {
   return exact ? path === to : pathStartsWith(path, to);
 }
 
-export function catalogUrl(): string {
-  if (typeof window === 'undefined') return '';
-  return `${window.location.origin}${window.location.pathname}#/katalog`;
-}
-
 export function AppShell({ children }: { children: ReactNode }) {
   const { state } = useStore();
   const location = useLocation();
@@ -59,7 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const receivable = outstandingTotal(state);
 
   const handleShare = async () => {
-    if (!state.settings.whatsapp.trim()) {
+    if (!normalizePhone(state.settings.whatsapp)) {
       notify('Atur nomor WhatsApp dulu', { tone: 'error', message: 'Nomor ini dipakai untuk menerima pesanan dari katalog.' });
       navigate('/pengaturan');
       return;
@@ -67,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     const result = await share({
       title: 'Katalog Caca Bumbu',
       text: `Pesan bumbu rumahan dari ${state.settings.businessName}. Pilih bumbu, kirim pesanan lewat WhatsApp.`,
-      url: catalogUrl(),
+      url: sharedCatalogUrl(state),
     });
     if (result === 'copied') notify('Link katalog disalin', { message: 'Kirim ke warung lewat WhatsApp.' });
     if (result === 'failed') notify('Belum bisa membagikan link', { tone: 'error' });

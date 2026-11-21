@@ -75,30 +75,42 @@ assert.equal(state.purchases[0].total, 90000, 'belanja tersimpan');
 assert.ok(state.ingredients.some(item => item.name.toLowerCase() === 'cabai rawit'), 'bahan baru terdaftar');
 console.log('purchase flow OK');
 
-// Pengaturan WhatsApp + katalog
+// Pengaturan WhatsApp + link katalog lintas perangkat
 await page.goto(BASE + '#/pengaturan', { waitUntil: 'networkidle' });
 await page.locator('#settings-wa').fill('081234567890');
 await page.getByRole('button', { name: 'Simpan pengaturan' }).click();
 await page.waitForTimeout(400);
 state = await getState();
 assert.equal(state.settings.whatsapp, '081234567890', 'nomor WhatsApp tersimpan');
-await page.goto(BASE + '#/katalog', { waitUntil: 'networkidle' });
-assert.ok(await page.getByText('Tanya penjual').isVisible(), 'katalog WhatsApp aktif');
-await page.locator('.catalog-add').first().click();
-await page.getByRole('button', { name: 'Pesan sekarang' }).click();
-await page.getByLabel('Nama pemesan').fill('Bu Sari');
-await page.evaluate(() => { window.__waUrl = ''; window.open = (url) => { window.__waUrl = String(url); return null; }; });
-await page.getByRole('button', { name: 'Kirim lewat WhatsApp' }).click();
-await page.waitForTimeout(200);
-const waUrl = await page.evaluate(() => window.__waUrl);
+const sharedLink = (await page.locator('.catalog-preview code').innerText()).trim();
+assert.ok(sharedLink.includes('#/katalog?d='), 'link katalog membawa snapshot: ' + sharedLink.slice(0, 80));
+console.log('shared catalog link length', sharedLink.length);
+
+const customerContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'id-ID', timezoneId: 'Asia/Jakarta' });
+const customerPage = await customerContext.newPage();
+customerPage.on('pageerror', error => errors.push('customer: ' + error.message));
+customerPage.on('console', message => { if (message.type() === 'error') errors.push('customer: ' + message.text()); });
+await customerPage.goto(BASE + '#/katalog', { waitUntil: 'networkidle' });
+assert.ok(await customerPage.getByText('Katalog belum dibagikan').isVisible(), 'link tanpa snapshot tidak menampilkan katalog kosong');
+await customerPage.goto(sharedLink, { waitUntil: 'networkidle' });
+assert.ok(await customerPage.getByText('Dapur Caca').first().isVisible(), 'nama penjual terbawa ke perangkat warung');
+assert.ok(await customerPage.getByText('Tanya penjual').isVisible(), 'katalog WhatsApp aktif di perangkat warung');
+await customerPage.locator('.catalog-add').first().click();
+await customerPage.getByRole('button', { name: 'Pesan sekarang' }).click();
+await customerPage.getByLabel('Nama pemesan').fill('Bu Sari');
+await customerPage.evaluate(() => { window.__waUrl = ''; window.open = (url) => { window.__waUrl = String(url); return null; }; });
+await customerPage.getByRole('button', { name: 'Kirim lewat WhatsApp' }).click();
+await customerPage.waitForTimeout(200);
+const waUrl = await customerPage.evaluate(() => window.__waUrl);
 assert.ok(waUrl.includes('wa.me/6281234567890'), 'nomor WhatsApp tujuan benar: ' + waUrl);
 assert.ok(decodeURIComponent(waUrl).includes('Bu Sari'), 'nama pemesan pada pesan WA');
-console.log('catalog order OK', waUrl.slice(0, 60) + '...');
+console.log('cross-device catalog order OK', waUrl.slice(0, 60) + '...');
+await customerContext.close();
 
 // Simpan data setelah reload
 await page.goto(BASE + '#/', { waitUntil: 'networkidle' });
 await page.reload({ waitUntil: 'networkidle' });
-assert.ok(await page.getByText('Selamat malam, Caca').isVisible(), 'data dan sesi bertahan setelah reload');
+assert.ok(await page.getByText(/Selamat (pagi|siang|sore|malam), Caca/).isVisible(), 'data dan sesi bertahan setelah reload');
 console.log('persistence OK');
 
 assert.deepEqual(errors, [], 'tidak ada console error');

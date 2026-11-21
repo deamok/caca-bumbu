@@ -15,13 +15,17 @@ import { useDocumentTitle } from '../lib/hooks';
 import { useToast } from '../components/Toast';
 import { BrandSymbol, EmptyBowl } from '../components/Brand';
 import { Badge, Button, Field, Input, ProductMark, Sheet, Textarea } from '../components/ui';
+import { useLocation } from '../lib/router';
+import { decodeSharedCatalog, sharedCatalogToProducts } from '../lib/catalog';
 import { formatMoney, normalizePhone, whatsappLink } from '../lib/format';
+import { formatDate } from '../lib/date';
 import type { Product } from '../types';
 
 export function OrderCatalogPage() {
   useDocumentTitle('Pesan bumbu');
   const { state } = useStore();
   const { notify } = useToast();
+  const location = useLocation();
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<Record<string, number>>({});
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -31,23 +35,35 @@ export function OrderCatalogPage() {
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
+
+  const hasSharePayload = Boolean(location.query.get('d'));
+  const shared = useMemo(() => decodeSharedCatalog(location.query.get('d')), [location.raw]);
+  const isUnavailable = hasSharePayload ? !shared : !state.meta.onboarded;
+  const catalogProducts = useMemo(
+    () => (shared ? sharedCatalogToProducts(shared) : state.products.filter((product) => product.active)),
+    [shared, state.products],
+  );
+  const sellerName = shared?.seller.name ?? state.settings.businessName;
+  const sellerWhatsapp = shared?.seller.whatsapp ?? state.settings.whatsapp;
+  const sellerAddress = shared?.seller.address ?? state.settings.address;
+  const hasWhatsApp = Boolean(normalizePhone(sellerWhatsapp));
+
   const products = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return state.products.filter((product) => product.active && (!term || product.name.toLowerCase().includes(term)));
-  }, [state.products, search]);
+    return catalogProducts.filter((product) => !term || product.name.toLowerCase().includes(term));
+  }, [catalogProducts, search]);
   const lines = useMemo(
     () =>
       Object.entries(cart)
         .map(([productId, qty]) => {
-          const product = state.products.find((item) => item.id === productId);
+          const product = catalogProducts.find((item) => item.id === productId);
           return product && qty > 0 ? { product, qty } : null;
         })
         .filter((line): line is { product: Product; qty: number } => Boolean(line)),
-    [cart, state.products],
+    [cart, catalogProducts],
   );
   const qtyTotal = lines.reduce((sum, line) => sum + line.qty, 0);
   const total = lines.reduce((sum, line) => sum + line.qty * line.product.price, 0);
-  const hasWhatsApp = Boolean(normalizePhone(state.settings.whatsapp));
 
   const setQty = (product: Product, next: number) => {
     const qty = Math.max(0, Math.min(product.stock, next));
@@ -64,7 +80,7 @@ export function OrderCatalogPage() {
   const buildMessage = () => {
     const rows = lines.map((line) => `• ${line.qty} × ${line.product.name} — ${formatMoney(line.qty * line.product.price)}`).join('\n');
     return [
-      `Halo ${state.settings.businessName}, saya mau pesan bumbu:`,
+      `Halo ${sellerName}, saya mau pesan bumbu:`,
       '',
       rows,
       '',
@@ -89,11 +105,15 @@ export function OrderCatalogPage() {
       setError('Penjual belum mengatur nomor WhatsApp.');
       return;
     }
-    const url = whatsappLink(state.settings.whatsapp, buildMessage());
+    const url = whatsappLink(sellerWhatsapp, buildMessage());
     window.open(url, '_blank', 'noopener,noreferrer');
     setCheckoutOpen(false);
     notify('Pesanan siap dikirim', { message: 'Periksa pesan di WhatsApp lalu tekan kirim.' });
   };
+
+  if (isUnavailable) {
+    return <CatalogUnavailable invalid={hasSharePayload} />;
+  }
 
   return (
     <div className="catalog-page">
@@ -101,12 +121,12 @@ export function OrderCatalogPage() {
         <div className="catalog-top__brand">
           <BrandSymbol size={38} />
           <div>
-            <strong>{state.settings.businessName}</strong>
+            <strong>{sellerName}</strong>
             <span>Bumbu rumahan · pesan langsung</span>
           </div>
         </div>
         {hasWhatsApp ? (
-          <a className="catalog-top__wa" href={whatsappLink(state.settings.whatsapp, `Halo ${state.settings.businessName}, saya mau tanya-tanya bumbu.`)} target="_blank" rel="noreferrer">
+          <a className="catalog-top__wa" href={whatsappLink(sellerWhatsapp, `Halo ${sellerName}, saya mau tanya-tanya bumbu.`)} target="_blank" rel="noreferrer">
             <Send size={15} /> Tanya penjual
           </a>
         ) : null}
@@ -119,8 +139,9 @@ export function OrderCatalogPage() {
             <h1>Bumbu siap masak,<br /><em>tinggal pilih.</em></h1>
             <p>Pilih jenis dan jumlah bumbu, lalu kirim pesanan ke WhatsApp penjual. Mudah, tanpa perlu install aplikasi.</p>
             <div className="catalog-hero__meta">
-              <span><Package size={15} /> {state.products.filter((product) => product.active).length} jenis bumbu</span>
+              <span><Package size={15} /> {catalogProducts.length} jenis bumbu</span>
               <span><Store size={15} /> Harga per pack</span>
+              {shared ? <span>Diperbarui {formatDate(shared.updatedAt)}</span> : <span>Pratinjau dari HP ini</span>}
             </div>
           </div>
           <div className="catalog-hero__art" aria-hidden="true">
@@ -191,14 +212,14 @@ export function OrderCatalogPage() {
         <section className="catalog-note">
           <div><CheckCircle2 size={18} /><span>Bumbu dibuat sendiri dalam batch kecil.</span></div>
           <div><ShoppingBag size={18} /><span>Pesanan dikonfirmasi penjual lewat WhatsApp.</span></div>
-          <div><Store size={18} /><span>Bisa diantar untuk area sekitar.</span></div>
+          <div><Store size={18} /><span>Stok mengikuti link terakhir yang dibagikan.</span></div>
         </section>
       </main>
 
       <footer className="catalog-footer">
         <BrandSymbol size={26} />
-        <span>{state.settings.businessName} · bumbu rumahan</span>
-        {state.settings.address ? <small>{state.settings.address}</small> : null}
+        <span>{sellerName} · bumbu rumahan</span>
+        {sellerAddress ? <small>{sellerAddress}</small> : null}
       </footer>
 
       {qtyTotal ? (
@@ -246,6 +267,38 @@ export function OrderCatalogPage() {
           <p className="catalog-checkout__note">Pesanan belum tercatat sampai Ibu mengirim pesan WhatsApp ke penjual.</p>
         </div>
       </Sheet>
+    </div>
+  );
+}
+
+function CatalogUnavailable({ invalid }: { invalid: boolean }) {
+  return (
+    <div className="catalog-page catalog-unavailable">
+      <header className="catalog-top">
+        <div className="catalog-top__brand">
+          <BrandSymbol size={38} />
+          <div>
+            <strong>Caca Bumbu</strong>
+            <span>Katalog pesanan warung</span>
+          </div>
+        </div>
+      </header>
+      <main className="catalog-main">
+        <div className="catalog-unavailable__card">
+          <div className="catalog-unavailable__art"><EmptyBowl size={72} /></div>
+          <span className="eyebrow">Katalog pesanan</span>
+          <h1>{invalid ? 'Link katalog tidak tersedia' : 'Katalog belum dibagikan'}</h1>
+          <p>
+            {invalid
+              ? 'Link ini tidak lengkap atau sudah rusak. Minta penjual mengirim ulang link katalog terbaru lewat WhatsApp.'
+              : 'Minta link katalog terbaru langsung ke penjual. Setiap link berisi daftar bumbu, harga, dan nomor WhatsApp penjual.'}
+          </p>
+        </div>
+      </main>
+      <footer className="catalog-footer">
+        <BrandSymbol size={26} />
+        <span>Caca Bumbu · bumbu rumahan</span>
+      </footer>
     </div>
   );
 }

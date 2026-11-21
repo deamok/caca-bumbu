@@ -93,6 +93,8 @@ Buka **Pengaturan** → isi **Nomor WhatsApp penjual** → simpan → **Bagikan 
 
 Katalog tidak membuat pesanan di server. Pesanan baru masuk setelah warung menekan kirim di WhatsApp dan penjual mencatatnya sebagai penjualan/titipan.
 
+Link katalog membawa **snapshot** nama usaha, daftar produk, harga, stok, dan nomor WhatsApp pada saat link dibuat. Ini membuat katalog tetap bisa dibuka di HP warung tanpa server atau akun. Jika harga/stok berubah, bagikan ulang link katalog yang baru agar warung melihat data terbaru.
+
 ## Data, privasi, dan cadangan
 
 - Data disimpan di **localStorage** perangkat dengan kunci `caca-bumbu:state:v1`.

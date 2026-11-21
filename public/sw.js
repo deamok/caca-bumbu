@@ -1,5 +1,5 @@
 /* Caca Bumbu — offline-first service worker */
-const CACHE = 'caca-bumbu-v1';
+const CACHE = 'caca-bumbu-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
