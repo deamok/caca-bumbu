@@ -182,7 +182,7 @@ export function ProductFormSheet({
                 : 'Tambahkan foto agar warung lebih mudah memilih. JPG/PNG, otomatis diperkecil.'}
             </p>
             {!session ? (
-              <p className="photo-field__hint">Mode lokal: foto disimpan di HP ini. Masuk agar ikut tersinkron dan muncul di katalog.</p>
+              <p className="photo-field__hint">Mode lokal: foto hanya tersimpan di HP ini dan belum tampil di katalog. Masuk dulu, lalu pilih ulang foto agar diunggah ke cloud.</p>
             ) : null}
           </div>
           <div className="photo-field__actions">
