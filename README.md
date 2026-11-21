@@ -28,7 +28,8 @@ Tampilan desktop tersedia di [dashboard](docs/screenshots/dashboard-desktop.png)
 - **Jual langsung / kasir** — pilih bumbu, atur jumlah, bayar tunai, QRIS, transfer, atau bon. Stok langsung berkurang.
 - **Titipan warung** — catat bumbu yang diantar, tanggal kunjungan, lalu hitung jumlah laku/rusak/kembali.
 - **Kunjungan sekali jalan** — saat menghitung titipan, setoran bisa dicatat sekaligus membuat titipan baru untuk periode berikutnya.
-- **Stok & produk** — harga jual, HPP, stok, warna kartu, stok menipis, dan riwayat pergerakan stok.
+- **Stok & produk** — foto bumbu, harga jual, HPP, stok, warna kartu, stok menipis, dan riwayat pergerakan stok.
+- **Foto bumbu** — ambil dari kamera/galeri HP, otomatis diperkecil, tampil di kasir, daftar produk, analisa, dan katalog warung.
 - **Warung langganan** — kontak, alamat, catatan, titipan aktif, piutang, dan riwayat transaksi per warung.
 - **Bahan & belanja** — catat belanja pasar, harga satuan otomatis, kategori, dan bahan terbesar.
 - **Analisa** — omzet, tren, sumber omzet (langsung vs titipan), bumbu paling laku, estimasi laba kotor, belanja bahan, dan rekomendasi otomatis.
@@ -86,7 +87,7 @@ Detail tabel, kebijakan RLS, dan alur sinkronisasi ada di [docs/migrasi-supabase
 
 1. Buat project di [supabase.com](https://supabase.com) (region terdekat, mis. Singapore).
 2. Buka **Project Settings → API**, salin **Project URL** dan **anon public key**.
-3. Jalankan skema database — pilih salah satu:
+3. Jalankan skema database (termasuk bucket Storage `product-images`) — pilih salah satu:
    - **Dashboard → SQL Editor** → tempel isi [supabase/migrations/20261121090000_init.sql](supabase/migrations/20261121090000_init.sql) → **Run**.
    - atau lewat Management API (butuh access token dari [Account → Tokens](https://supabase.com/dashboard/account/tokens)):
      ```bash
@@ -167,6 +168,7 @@ Link katalog membawa **snapshot** nama usaha, daftar produk, harga, stok, dan no
 ## Akun, data, dan privasi
 
 - Data utama tersimpan di **Supabase** pada akun pemilik. Setiap baris tabel memiliki `user_id` dan dilindungi RLS, sehingga akun lain tidak bisa membaca walaupun memegang `anon key`.
+- Foto bumbu disimpan di bucket Supabase Storage **`product-images`** yang bersifat publik (URL gambar bisa dibuka katalog tanpa login). Menulis/menghapus hanya bisa di folder akun sendiri. Tanpa login, foto disimpan sebagai data URL kecil di HP dan tidak ikut ke link katalog.
 - Perangkat menyimpan cache di **localStorage** dengan kunci `caca-bumbu:state:v1`, plus penanda sinkronisasi `caca-bumbu:sync:v1`. Cache ini yang membuat aplikasi tetap jalan di warung tanpa sinyal.
 - Perubahan luring dikirim otomatis saat online, saat aplikasi kembali dibuka, atau setiap menit selama aplikasi terlihat. Bisa juga dipicu manual dari **Pengaturan → Sinkronkan sekarang**.
 - **Keluar akun** tidak menghapus data di HP; data baru dihapus lewat **Pengaturan → Hapus semua data** (yang juga membersihkan cloud).
@@ -197,6 +199,7 @@ src/
     storage.ts     cache localStorage, backup/restore
     cloudSchema.ts pemetaan AppState ↔ baris Supabase, diff, merge
     cloudSync.ts   baca/tulis tabel Supabase
+    productImages.ts kompres + unggah foto produk ke Storage
     supabase.ts    klien Supabase (lazy) + flag konfigurasi
   pages/           semua layar aplikasi (termasuk AuthPage)
   store/

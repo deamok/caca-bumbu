@@ -9,6 +9,8 @@ export interface Product {
   unit: string;
   tone: ProductTone;
   active: boolean;
+  /** Foto produk (URL Supabase Storage atau data URL untuk mode lokal). */
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

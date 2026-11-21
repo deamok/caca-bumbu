@@ -45,6 +45,15 @@ async function countRows(table) {
   return rows[0]?.n ?? 0;
 }
 
+async function waitFor(predicate, timeout = 25000, label = 'kondisi') {
+  const started = Date.now();
+  while (Date.now() - started < timeout) {
+    if (await predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  throw new Error(`timeout menunggu ${label}`);
+}
+
 async function waitForCount(table, expected, label, timeout = 25000) {
   const started = Date.now();
   let last = -1;
@@ -83,6 +92,7 @@ const errors = [];
 const isNoise = (text) => /Failed to load resource|ERR_INTERNET|net::|favicon/i.test(text);
 
 let exitCode = 0;
+let storageCleanup = null;
 try {
   console.log('project :', REF, `(${PROJECT_URL})`);
   console.log('akun uji:', EMAIL);
@@ -142,6 +152,53 @@ try {
   assert.ok(saleItems[0].lines >= 1, 'items jsonb tersimpan');
   console.log('✓ diff penjualan tersimpan:', saleItems[0].code, '|', saleItems[0].lines, 'baris item');
 
+  // 4b. Foto produk → Supabase Storage + tampil di katalog publik
+  const photoBuffer = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  );
+  await pageA.goto(BASE + '#/produk', { waitUntil: 'networkidle' });
+  await pageA.waitForTimeout(500);
+  await pageA.locator('.product-table__row').first().click();
+  await pageA.waitForTimeout(400);
+  await pageA.locator('.photo-field input[type=file]').setInputFiles({
+    name: 'foto-bumbu.png',
+    mimeType: 'image/png',
+    buffer: photoBuffer,
+  });
+  await pageA.waitForTimeout(500);
+  await pageA.getByRole('button', { name: 'Simpan perubahan' }).click();
+  await waitFor(async () => {
+    const rows = await sql(
+      `select image_url from public.products where user_id = (select id from auth.users where email = '${EMAIL}') and image_url <> '' limit 1`,
+    );
+    return rows.length === 1;
+  }, 25000, 'foto produk tersimpan');
+  const photoRows = await sql(
+    `select image_url from public.products where user_id = (select id from auth.users where email = '${EMAIL}') and image_url <> '' limit 1`,
+  );
+  const photoUrl = photoRows[0].image_url;
+  assert.ok(photoUrl.includes('/storage/v1/object/public/product-images/'), 'foto masuk bucket product-images');
+  const imageResponse = await fetch(photoUrl);
+  assert.equal(imageResponse.status, 200, 'foto bisa dibuka publik');
+  assert.ok((imageResponse.headers.get('content-type') || '').includes('image/'), 'content-type gambar');
+  const sessionData = await pageA.evaluate(() => JSON.parse(localStorage.getItem('caca-bumbu:auth:v1') || 'null'));
+  storageCleanup = { url: photoUrl, token: sessionData?.access_token ?? null };
+  console.log('✓ foto produk terunggah ke Storage:', photoUrl.split('/product-images/')[1]);
+
+  await pageA.goto(BASE + '#/pengaturan', { waitUntil: 'networkidle' });
+  await pageA.waitForTimeout(500);
+  const sharedLink = (await pageA.locator('.catalog-preview code').innerText()).trim();
+  assert.ok(sharedLink.includes('#/katalog?d='), 'link katalog tersedia');
+  const catalogPage = await deviceA.newPage();
+  await catalogPage.goto(sharedLink, { waitUntil: 'networkidle' });
+  await catalogPage.waitForTimeout(900);
+  const catalogPhotos = catalogPage.locator('.catalog-product__photo');
+  assert.ok((await catalogPhotos.count()) >= 1, 'foto tampil di katalog');
+  assert.ok(await catalogPhotos.first().evaluate((img) => img.complete && img.naturalWidth > 0), 'foto katalog termuat');
+  await catalogPage.close();
+  console.log('✓ foto tampil di katalog publik');
+
   // 5. Perangkat kedua: masuk dengan akun yang sama → menerima data cloud
   const deviceB = await browser.newContext(contextOptions);
   await deviceB.addInitScript(removeHostingBadge);
@@ -176,6 +233,19 @@ try {
   console.error('\nGAGAL:', error.message);
 } finally {
   try {
+    if (storageCleanup?.url && storageCleanup?.token && ANON) {
+      const storagePath = decodeURIComponent(storageCleanup.url.split('/product-images/')[1].split('?')[0]);
+      const deleted = await fetch(`${PROJECT_URL}/storage/v1/object/product-images`, {
+        method: 'DELETE',
+        headers: {
+          apikey: ANON,
+          Authorization: `Bearer ${storageCleanup.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prefixes: [storagePath] }),
+      });
+      console.log('foto uji dihapus dari Storage:', deleted.status);
+    }
     await sql(`delete from auth.users where email = '${EMAIL}'`);
     console.log('akun uji dihapus (data ikut terhapus lewat cascade)');
   } catch (error) {

@@ -458,15 +458,23 @@ export function ProductMark({
   name,
   tone = 'saffron',
   size = 'md',
+  imageUrl,
 }: {
   name: string;
   tone?: ProductTone;
   size?: 'xs' | 'sm' | 'md' | 'lg';
+  imageUrl?: string;
 }) {
   return (
     <span className={`product-mark product-mark--${tone} product-mark--${size}`} aria-hidden="true">
-      <span>{initials(name).slice(0, 2)}</span>
-      <i />
+      {imageUrl ? (
+        <img className="product-mark__photo" src={imageUrl} alt="" loading="lazy" />
+      ) : (
+        <>
+          <span>{initials(name).slice(0, 2)}</span>
+          <i />
+        </>
+      )}
     </span>
   );
 }

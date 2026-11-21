@@ -568,3 +568,8 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+/* Foto produk: susun tombol di bawah teks pada layar sempit */
+@media (max-width: 520px) {
+  .photo-field { flex-direction: column; align-items: stretch; }
+  .photo-field__actions { justify-content: flex-end; }
+}

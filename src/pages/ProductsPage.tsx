@@ -126,7 +126,7 @@ export function ProductsPage() {
               return (
                 <button type="button" className="product-table__row" key={product.id} onClick={() => openEdit(product)}>
                   <span className="product-table__name">
-                    <ProductMark name={product.name} tone={product.tone} size="sm" />
+                    <ProductMark name={product.name} tone={product.tone} size="sm" imageUrl={product.imageUrl} />
                     <span><strong>{product.name}</strong><small>per {product.unit}</small></span>
                   </span>
                   <span><strong>{formatMoney(product.price)}</strong></span>

@@ -524,7 +524,7 @@ export function adjustProductStock(
 
 export function createProduct(
   state: AppState,
-  input: { name: string; price: number; hpp?: number; stock?: number; unit?: string; tone?: Product['tone'] },
+  input: { name: string; price: number; hpp?: number; stock?: number; unit?: string; tone?: Product['tone']; imageUrl?: string },
 ): { state: AppState; product: Product } {
   const name = input.name.trim();
   if (!name) throw new DomainError('Nama bumbu wajib diisi.');
@@ -539,6 +539,7 @@ export function createProduct(
     stock,
     unit: input.unit?.trim() || 'pack',
     tone: input.tone ?? 'saffron',
+    imageUrl: input.imageUrl?.trim() ?? '',
     active: true,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -559,7 +560,7 @@ export function createProduct(
 export function updateProduct(
   state: AppState,
   productId: string,
-  changes: Partial<Pick<Product, 'name' | 'price' | 'hpp' | 'stock' | 'unit' | 'tone' | 'active'>>,
+  changes: Partial<Pick<Product, 'name' | 'price' | 'hpp' | 'stock' | 'unit' | 'tone' | 'active' | 'imageUrl'>>,
 ): AppState {
   const product = getProduct(state, productId);
   if (!product) throw new DomainError('Produk tidak ditemukan.');
@@ -573,6 +574,7 @@ export function updateProduct(
     price: changes.price === undefined ? product.price : Math.max(0, changes.price),
     hpp: changes.hpp === undefined ? product.hpp : Math.max(0, changes.hpp),
     unit: changes.unit?.trim() || product.unit,
+    imageUrl: changes.imageUrl === undefined ? product.imageUrl ?? '' : changes.imageUrl,
     updatedAt: timestamp,
   };
   let stockMoves = state.stockMoves;

@@ -7,6 +7,8 @@ export interface PublicCatalogProduct {
   unit: string;
   tone: ProductTone;
   stock: number;
+  /** Hanya URL http(s) yang dibawa; data URL lokal tidak ikut agar link tetap pendek. */
+  imageUrl?: string;
 }
 
 export interface SharedCatalog {
@@ -37,6 +39,7 @@ export function makeSharedCatalog(state: AppState): SharedCatalog {
         unit: product.unit,
         tone: product.tone,
         stock: product.stock,
+        ...(product.imageUrl && /^https?:\/\//i.test(product.imageUrl) ? { imageUrl: product.imageUrl } : {}),
       })),
     updatedAt: new Date().toISOString(),
   };
@@ -80,7 +83,8 @@ function isSharedCatalog(value: unknown): value is SharedCatalog {
       typeof row.unit === 'string' &&
       typeof row.stock === 'number' &&
       Number.isFinite(row.stock) &&
-      isTone(row.tone)
+      isTone(row.tone) &&
+      (row.imageUrl === undefined || typeof row.imageUrl === 'string')
     );
   });
 }
@@ -118,6 +122,7 @@ export function sharedCatalogToProducts(catalog: SharedCatalog): Product[] {
     stock: Math.max(0, Math.floor(product.stock)),
     unit: product.unit,
     tone: product.tone,
+    imageUrl: product.imageUrl ?? '',
     active: true,
     createdAt: timestamp,
     updatedAt: timestamp,

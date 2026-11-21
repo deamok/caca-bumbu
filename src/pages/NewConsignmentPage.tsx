@@ -214,7 +214,7 @@ export function NewConsignmentPage() {
                 const disabled = product.stock <= 0;
                 return (
                   <div className={`pick-row ${qty > 0 ? 'is-selected' : ''} ${disabled ? 'is-disabled' : ''}`} key={product.id}>
-                    <ProductMark name={product.name} tone={product.tone} size="sm" />
+                    <ProductMark name={product.name} tone={product.tone} size="sm" imageUrl={product.imageUrl} />
                     <div className="pick-row__info">
                       <strong>{product.name}</strong>
                       <span>{formatMoney(product.price)} · stok {product.stock} pack</span>

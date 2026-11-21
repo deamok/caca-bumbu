@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Check, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { Camera, Check, Sparkles, Trash2 } from 'lucide-react';
 import type { Product, ProductTone } from '../types';
 import { useStore } from '../store/StoreContext';
+import { useAuth } from '../store/AuthContext';
 import { useToast } from './Toast';
 import {
   Button,
@@ -12,6 +13,8 @@ import {
   Toggle,
 } from './ui';
 import { formatMoney } from '../lib/format';
+import { deleteProductImage, saveProductImage } from '../lib/productImages';
+import { uid } from '../lib/id';
 
 const TONES: Array<{ value: ProductTone; label: string }> = [
   { value: 'chili', label: 'Merah cabai' },
@@ -32,6 +35,7 @@ export function ProductFormSheet({
   product?: Product;
 }) {
   const { addProduct, editProduct } = useStore();
+  const { session } = useAuth();
   const { notify } = useToast();
   const [name, setName] = useState('');
   const [price, setPrice] = useState(0);
@@ -40,7 +44,12 @@ export function ProductFormSheet({
   const [unit, setUnit] = useState('pack');
   const [tone, setTone] = useState<ProductTone>('saffron');
   const [active, setActive] = useState(true);
+  const [imageUrl, setImageUrl] = useState('');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -51,12 +60,44 @@ export function ProductFormSheet({
     setUnit(product?.unit ?? 'pack');
     setTone(product?.tone ?? 'saffron');
     setActive(product?.active ?? true);
+    setImageUrl(product?.imageUrl ?? '');
+    setPendingFile(null);
+    setSaving(false);
     setError('');
   }, [open, product]);
 
-  const margin = price - hpp;
+  useEffect(() => {
+    if (!pendingFile) {
+      setPreviewUrl('');
+      return;
+    }
+    const url = URL.createObjectURL(pendingFile);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingFile]);
 
-  const save = () => {
+  const margin = price - hpp;
+  const shownImage = previewUrl || imageUrl;
+
+  const pickPhoto = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (fileRef.current) fileRef.current.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Pilih file gambar (JPG atau PNG).');
+      return;
+    }
+    setPendingFile(file);
+    setError('');
+  };
+
+  const removePhoto = () => {
+    setPendingFile(null);
+    setImageUrl('');
+  };
+
+  const save = async () => {
+    if (saving) return;
     if (!name.trim()) {
       setError('Nama bumbu wajib diisi.');
       return;
@@ -65,17 +106,48 @@ export function ProductFormSheet({
       setError('Harga jual harus lebih dari nol.');
       return;
     }
+
+    setSaving(true);
     try {
+      let finalImage = imageUrl;
+      if (pendingFile) {
+        finalImage = await saveProductImage({
+          file: pendingFile,
+          productId: product?.id ?? uid('prod'),
+          userId: session?.user.id ?? null,
+        });
+      }
+
       if (product) {
-        editProduct(product.id, { name: name.trim(), price, hpp, stock, unit: unit.trim() || 'pack', tone, active });
+        editProduct(product.id, {
+          name: name.trim(),
+          price,
+          hpp,
+          stock,
+          unit: unit.trim() || 'pack',
+          tone,
+          active,
+          imageUrl: finalImage,
+        });
+        if (imageUrl && imageUrl !== finalImage) void deleteProductImage(imageUrl);
         notify('Produk diperbarui', { message: name.trim() });
       } else {
-        addProduct({ name: name.trim(), price, hpp, stock, unit: unit.trim() || 'pack', tone });
+        addProduct({
+          name: name.trim(),
+          price,
+          hpp,
+          stock,
+          unit: unit.trim() || 'pack',
+          tone,
+          imageUrl: finalImage,
+        });
         notify('Produk baru ditambahkan', { message: name.trim() });
       }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Produk belum bisa disimpan.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -84,18 +156,48 @@ export function ProductFormSheet({
       open={open}
       onClose={onClose}
       title={product ? 'Edit bumbu' : 'Tambah bumbu'}
-      description="Atur harga, HPP, dan stok yang siap dijual."
-      footer={<Button full size="lg" onClick={save} icon={<Check size={17} />}>{product ? 'Simpan perubahan' : 'Tambah bumbu'}</Button>}
+      description="Atur foto, harga, HPP, dan stok yang siap dijual."
+      footer={
+        <Button full size="lg" onClick={() => void save()} loading={saving} icon={<Check size={17} />}>
+          {product ? 'Simpan perubahan' : 'Tambah bumbu'}
+        </Button>
+      }
     >
       <div className="product-form">
         <div className="product-form__preview">
-          <ProductMark name={name || 'Bumbu'} tone={tone} size="lg" />
+          <ProductMark name={name || 'Bumbu'} tone={tone} size="lg" imageUrl={shownImage} />
           <div>
             <span className="eyebrow">Pratinjau produk</span>
             <h3>{name || 'Nama bumbu'}</h3>
             <p>{formatMoney(price)} / {unit || 'pack'} {hpp > 0 ? `· laba ${formatMoney(margin)}` : ''}</p>
           </div>
         </div>
+
+        <div className="photo-field">
+          <div className="photo-field__body">
+            <strong>Foto bumbu</strong>
+            <p>
+              {shownImage
+                ? 'Foto tampil di kasir, daftar produk, dan katalog warung.'
+                : 'Tambahkan foto agar warung lebih mudah memilih. JPG/PNG, otomatis diperkecil.'}
+            </p>
+            {!session ? (
+              <p className="photo-field__hint">Mode lokal: foto disimpan di HP ini. Masuk agar ikut tersinkron dan muncul di katalog.</p>
+            ) : null}
+          </div>
+          <div className="photo-field__actions">
+            <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()} icon={<Camera size={15} />}>
+              {shownImage ? 'Ganti' : 'Pilih foto'}
+            </Button>
+            {shownImage ? (
+              <Button size="sm" variant="ghost" onClick={removePhoto} icon={<Trash2 size={15} />}>
+                Hapus
+              </Button>
+            ) : null}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={pickPhoto} />
+        </div>
+
         <Field label="Nama bumbu" htmlFor="product-name">
           <Input id="product-name" value={name} onChange={(event) => { setName(event.target.value); setError(''); }} placeholder="Contoh: Rendang" autoFocus />
         </Field>
@@ -118,7 +220,7 @@ export function ProductFormSheet({
         {product ? (
           <p className="form-note"><Sparkles size={14} /> Perubahan stok otomatis dicatat sebagai penyesuaian stok.</p>
         ) : null}
-        <Field label="Warna kartu">
+        <Field label="Warna kartu" hint="dipakai bila tanpa foto">
           <div className="tone-picker">
             {TONES.map((item) => (
               <button type="button" key={item.value} aria-label={item.label} className={`tone-dot tone-dot--${item.value} ${tone === item.value ? 'is-active' : ''}`} onClick={() => setTone(item.value)}>

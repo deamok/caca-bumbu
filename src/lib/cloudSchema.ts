@@ -141,6 +141,7 @@ function productToRow(product: Product, userId: string): CloudRow {
     unit: product.unit,
     tone: product.tone,
     active: product.active,
+    image_url: product.imageUrl ?? '',
     created_at: product.createdAt,
     updated_at: product.updatedAt,
   };
@@ -323,6 +324,7 @@ function rowToProduct(row: CloudRow): Product | null {
   const id = text(row.id);
   if (!id) return null;
   const createdAt = iso(row.created_at);
+  const imageUrl = text(row.image_url);
   return {
     id,
     name: text(row.name),
@@ -332,6 +334,7 @@ function rowToProduct(row: CloudRow): Product | null {
     unit: text(row.unit, 'pack'),
     tone: pick(row.tone, TONES, 'saffron'),
     active: bool(row.active, true),
+    ...(imageUrl ? { imageUrl } : {}),
     createdAt,
     updatedAt: iso(row.updated_at, createdAt),
   };

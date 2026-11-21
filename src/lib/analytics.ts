@@ -181,6 +181,7 @@ export interface ProductPerformance {
   qty: number;
   revenue: number;
   tone: Product['tone'];
+  imageUrl?: string;
 }
 
 export function productPerformance(state: AppState, from: string, to: string): ProductPerformance[] {
@@ -193,6 +194,7 @@ export function productPerformance(state: AppState, from: string, to: string): P
       qty: 0,
       revenue: 0,
       tone: products.get(productId)?.tone ?? 'saffron',
+      imageUrl: products.get(productId)?.imageUrl,
     };
     existing.qty += qty;
     existing.revenue += revenue;

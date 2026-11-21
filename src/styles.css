@@ -1828,3 +1828,6 @@ ul, ol {
 .boot-screen .brand__name { color: var(--ink); }
 .auth-card .brand__tagline,
 .boot-screen .brand__tagline { color: var(--muted); }
+
+/* Foto produk pada penanda produk (ProductMark) */
+.product-mark__photo { display: block; width: 100%; height: 100%; object-fit: cover; }

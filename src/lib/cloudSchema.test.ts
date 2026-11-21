@@ -175,3 +175,22 @@ describe('cloudSchema', () => {
     expect(isEmptyRows(stateToRows(createInitialState(), USER_ID))).toBe(false);
   });
 });
+
+describe('foto produk', () => {
+  it('menyimpan image_url dan memulihkannya tanpa mengubah produk lain', () => {
+    const base = createInitialState();
+    const photo = 'https://x.supabase.co/storage/v1/object/public/product-images/u/p.jpg?v=1';
+    const state: AppState = {
+      ...base,
+      products: base.products.map((product, index) => (index === 0 ? { ...product, imageUrl: photo } : product)),
+    };
+
+    const rows = stateToRows(state, USER_ID);
+    expect(rows.products[0].image_url).toBe(photo);
+    expect(rows.products[1].image_url).toBe('');
+
+    const restored = rowsToState(rows);
+    expect(restored.products.find((product) => product.id === base.products[0].id)?.imageUrl).toBe(photo);
+    expect(restored.products.find((product) => product.id === base.products[1].id)?.imageUrl).toBeUndefined();
+  });
+});

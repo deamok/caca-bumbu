@@ -192,7 +192,7 @@ export function SalePage() {
                 return (
                   <div className={`product-pick ${qty > 0 ? 'is-selected' : ''} ${disabled ? 'is-disabled' : ''}`} key={product.id}>
                     <div className="product-pick__top">
-                      <ProductMark name={product.name} tone={product.tone} size="md" />
+                      <ProductMark name={product.name} tone={product.tone} size="md" imageUrl={product.imageUrl} />
                       <div className="product-pick__title">
                         <h3>{product.name}</h3>
                         <span>{formatMoney(product.price)} <small>/ {product.unit}</small></span>

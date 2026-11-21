@@ -174,8 +174,12 @@ export function OrderCatalogPage() {
               const soldOut = product.stock <= 0;
               return (
                 <article className={`catalog-product ${qty ? 'is-selected' : ''} ${soldOut ? 'is-soldout' : ''}`} key={product.id}>
-                  <div className={`catalog-product__art tone-bg--${product.tone}`}>
-                    <ProductMark name={product.name} tone={product.tone} size="lg" />
+                  <div className={`catalog-product__art ${product.imageUrl ? 'has-photo' : `tone-bg--${product.tone}`}`}>
+                    {product.imageUrl ? (
+                      <img className="catalog-product__photo" src={product.imageUrl} alt={product.name} loading="lazy" />
+                    ) : (
+                      <ProductMark name={product.name} tone={product.tone} size="lg" />
+                    )}
                     {soldOut ? <Badge tone="red">Habis</Badge> : <span className="catalog-product__fresh">Buatan sendiri</span>}
                   </div>
                   <div className="catalog-product__body">

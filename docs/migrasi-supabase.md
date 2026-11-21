@@ -24,7 +24,7 @@ Semua tabel memakai pola yang sama:
 
 | Tabel | Isi | Kolom penting |
 | --- | --- | --- |
-| `products` | Bumbu & stok | `name`, `price`, `hpp`, `stock`, `unit`, `tone`, `active` |
+| `products` | Bumbu & stok | `name`, `price`, `hpp`, `stock`, `unit`, `tone`, `active`, `image_url` |
 | `warungs` | Warung langganan | `name`, `owner`, `phone`, `address`, `notes` |
 | `sales` | Penjualan langsung | `code`, `date`, `warung_id`, `buyer_name`, `items` (jsonb), `total` |
 | `consignments` | Titipan | `code`, `warung_id`, `date`, `due_date`, `items` (jsonb), `status`, `closed_at` |
@@ -36,6 +36,10 @@ Semua tabel memakai pola yang sama:
 | `app_meta` | Status onboarding | `onboarded`, `demo`, `created_at` |
 
 `items` disimpan sebagai `jsonb` karena isinya selalu dibaca bersama dokumen induknya (tidak pernah di-query terpisah). Index dibuat untuk `user_id`, tanggal transaksi, status titipan, dan `product_id` pada riwayat stok.
+
+### Foto produk
+
+Foto bumbu disimpan di **Supabase Storage** bucket `product-images` (publik untuk dibaca agar katalog tanpa login tetap menampilkan foto). Path objek `{user_id}/{product_id}-{timestamp}.jpg`; policy insert/update/delete hanya mengizinkan folder `auth.uid()`, dan file lama dihapus saat foto diganti. Kolom `products.image_url` menyimpan URL publik beserta `?v=` untuk menghindari cache lama. Saat pengguna belum masuk (mode lokal), foto dikompres kecil dan disimpan sebagai data URL di localStorage — foto ini tidak ikut ke snapshot katalog.
 
 Skema lengkap: [supabase/migrations/20261121090000_init.sql](../supabase/migrations/20261121090000_init.sql).
 

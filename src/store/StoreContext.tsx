@@ -40,10 +40,10 @@ interface StoreValue {
   pay: (input: PaymentInput) => void;
   addWarung: (input: Pick<Warung, 'name' | 'owner' | 'phone' | 'address' | 'notes'>) => Warung;
   editWarung: (id: string, changes: Partial<Omit<Warung, 'id' | 'createdAt'>>) => void;
-  addProduct: (input: { name: string; price: number; hpp?: number; stock?: number; unit?: string; tone?: Product['tone'] }) => Product;
+  addProduct: (input: { name: string; price: number; hpp?: number; stock?: number; unit?: string; tone?: Product['tone']; imageUrl?: string }) => Product;
   editProduct: (
     id: string,
-    changes: Partial<Pick<Product, 'name' | 'price' | 'hpp' | 'stock' | 'unit' | 'tone' | 'active'>>,
+    changes: Partial<Pick<Product, 'name' | 'price' | 'hpp' | 'stock' | 'unit' | 'tone' | 'active' | 'imageUrl'>>,
   ) => void;
   setStock: (productId: string, stock: number, note?: string) => void;
   addPurchase: (input: PurchaseInput) => ReturnType<typeof createPurchase>;
@@ -114,7 +114,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     replace(updateWarung(stateRef.current, id, changes));
   }, [replace]);
 
-  const addProduct = useCallback((input: { name: string; price: number; hpp?: number; stock?: number; unit?: string; tone?: Product['tone'] }) => {
+  const addProduct = useCallback((input: { name: string; price: number; hpp?: number; stock?: number; unit?: string; tone?: Product['tone']; imageUrl?: string }) => {
     const result = createProduct(stateRef.current, input);
     replace(result.state);
     return result.product;

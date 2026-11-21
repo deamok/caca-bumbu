@@ -34,3 +34,23 @@ describe('katalog publik yang dibagikan', () => {
     expect(decodeSharedCatalog(encoded + 'xx')).toBeNull();
   });
 });
+
+describe('foto pada katalog publik', () => {
+  it('membawa foto dari storage dan melewati data URL lokal', () => {
+    const state = createDemoState();
+    const photo = 'https://x.supabase.co/storage/v1/object/public/product-images/u/p.jpg?v=1';
+    state.products[0].imageUrl = photo;
+    state.products[1].imageUrl = 'data:image/jpeg;base64,AAAA';
+
+    const catalog = makeSharedCatalog(state);
+    expect(catalog.products[0].imageUrl).toBe(photo);
+    expect(catalog.products[1]).not.toHaveProperty('imageUrl');
+
+    const decoded = decodeSharedCatalog(encodeSharedCatalog(catalog));
+    expect(decoded?.products[0].imageUrl).toBe(photo);
+
+    const products = sharedCatalogToProducts(decoded!);
+    expect(products[0].imageUrl).toBe(photo);
+    expect(products[1].imageUrl).toBe('');
+  });
+});

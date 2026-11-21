@@ -261,7 +261,7 @@ export function DashboardPage() {
                   return (
                     <div className="product-rank__row" key={product.productId}>
                       <span className="product-rank__number">0{index + 1}</span>
-                      <ProductMark name={product.name} tone={product.tone} size="sm" />
+                      <ProductMark name={product.name} tone={product.tone} size="sm" imageUrl={product.imageUrl} />
                       <div className="product-rank__body">
                         <div><strong>{product.name}</strong><span>{product.qty} pack</span></div>
                         <Progress value={product.qty} max={max} tone={index === 0 ? 'gold' : 'green'} />
@@ -299,7 +299,7 @@ export function DashboardPage() {
               <div className="low-stock-list">
                 {low.map((product) => (
                   <button key={product.id} type="button" onClick={() => navigate('/produk')}>
-                    <ProductMark name={product.name} tone={product.tone} size="xs" />
+                    <ProductMark name={product.name} tone={product.tone} size="xs" imageUrl={product.imageUrl} />
                     <span>{product.name}</span>
                     <Badge tone={product.stock === 0 ? 'red' : 'gold'}>{product.stock} {product.unit}</Badge>
                   </button>

@@ -229,3 +229,9 @@
 .account-tools__actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
 .account-tools__actions button { padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink-2); font-size: 10.6px; font-weight: 700; }
 .account-tools__actions button:hover { border-color: var(--line-strong); background: var(--paper-2); }
+
+/* Foto penuh pada kartu katalog */
+.catalog-product__art { position: relative; overflow: hidden; }
+.catalog-product__photo { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.catalog-product__art.has-photo .badge,
+.catalog-product__art.has-photo .catalog-product__fresh { z-index: 2; }

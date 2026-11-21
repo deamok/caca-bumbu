@@ -169,7 +169,7 @@ export function AnalysisPage() {
                   <div className="performance-table__row" key={product.productId}>
                     <span className="performance-table__product">
                       <span className="performance-table__rank">{index + 1}</span>
-                      <ProductMark name={product.name} tone={product.tone} size="xs" />
+                      <ProductMark name={product.name} tone={product.tone} size="xs" imageUrl={product.imageUrl} />
                       <strong>{product.name}</strong>
                     </span>
                     <span>{product.qty} pack</span>

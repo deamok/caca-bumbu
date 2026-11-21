@@ -279,7 +279,7 @@ function ReconcileView({ consignmentId }: { consignmentId: string }) {
               {reviewed.map((item) => (
                 <div className="audit-item" key={item.productId}>
                   <div className="audit-item__product">
-                    <ProductMark name={item.name} tone={state.products.find((product) => product.id === item.productId)?.tone ?? 'saffron'} size="sm" />
+                    <ProductMark name={item.name} tone={state.products.find((product) => product.id === item.productId)?.tone ?? 'saffron'} imageUrl={state.products.find((product) => product.id === item.productId)?.imageUrl} size="sm" />
                     <div>
                       <strong>{item.name}</strong>
                       <span>{formatMoney(item.price)} / pack</span>
@@ -526,7 +526,7 @@ function ClosedView({ consignmentId }: { consignmentId: string }) {
             </div>
             {consignment.items.map((item) => (
               <div className="readonly-table__row" key={item.productId}>
-                <span className="readonly-table__product"><ProductMark name={item.name} tone={state.products.find((product) => product.id === item.productId)?.tone ?? 'saffron'} size="xs" />{item.name}</span>
+                <span className="readonly-table__product"><ProductMark name={item.name} tone={state.products.find((product) => product.id === item.productId)?.tone ?? 'saffron'} imageUrl={state.products.find((product) => product.id === item.productId)?.imageUrl} size="xs" />{item.name}</span>
                 <span>{item.sentQty}</span><span>{item.soldQty}</span><span>{item.returnedQty}</span><span>{item.damagedQty}</span><strong>{formatMoney(item.soldQty * item.price)}</strong>
               </div>
             ))}
@@ -535,7 +535,7 @@ function ClosedView({ consignmentId }: { consignmentId: string }) {
             {consignment.items.map((item) => (
               <div className="readonly-mobile__row" key={item.productId}>
                 <div className="readonly-mobile__head">
-                  <ProductMark name={item.name} tone={state.products.find((product) => product.id === item.productId)?.tone ?? 'saffron'} size="xs" />
+                  <ProductMark name={item.name} tone={state.products.find((product) => product.id === item.productId)?.tone ?? 'saffron'} imageUrl={state.products.find((product) => product.id === item.productId)?.imageUrl} size="xs" />
                   <strong>{item.name}</strong>
                   <b>{formatMoney(item.soldQty * item.price)}</b>
                 </div>
