@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+import fs from 'fs';
+const svg = fs.readFileSync('public/icons/icon-maskable.svg', 'utf8');
+const html = '<!doctype html><style>html,body{margin:0;padding:0;width:512px;height:512px;overflow:hidden;background:#173f30}svg{display:block;width:512px;height:512px}</style>' + svg;
+const browser = await chromium.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true });
+const page = await browser.newPage({ viewport: { width: 512, height: 512 }, deviceScaleFactor: 1 });
+await page.setContent(html);
+await page.screenshot({ path: 'public/icons/icon-512.png' });
+await page.screenshot({ path: 'public/icons/icon-maskable-512.png' });
+await browser.close();
